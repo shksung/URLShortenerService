@@ -19,6 +19,11 @@ public class WorkflowOrchestratorService {
 
     public void markStageComplete(String executionId, WorkflowStage stage, String note) {
         WorkflowExecution execution = getExecution(executionId);
+        for (WorkflowStage dependency : execution.getDependencies(stage)) {
+            if (execution.getStageStatus(dependency) != WorkflowStatus.COMPLETED) {
+                throw new IllegalStateException("Cannot complete " + stage + " before dependency " + dependency);
+            }
+        }
         execution.setStageStatus(stage, WorkflowStatus.COMPLETED, note);
     }
 
@@ -46,6 +51,15 @@ public class WorkflowOrchestratorService {
 
         execution.setStageStatus(WorkflowStage.RELEASE_READINESS, WorkflowStatus.APPROVAL_REQUIRED, "awaiting human approval");
         throw new IllegalStateException("Release readiness requires human approval before promotion");
+    }
+
+    public void approveReleaseReadiness(String executionId, String note) {
+        WorkflowExecution execution = getExecution(executionId);
+        if (execution.getStageStatus(WorkflowStage.RELEASE_READINESS) != WorkflowStatus.APPROVAL_REQUIRED) {
+            throw new IllegalStateException("Release readiness is not awaiting approval");
+        }
+
+        execution.setStageStatus(WorkflowStage.RELEASE_READINESS, WorkflowStatus.COMPLETED, note);
     }
 
     public WorkflowMetrics getMetrics(String executionId) {

@@ -36,6 +36,34 @@ class WorkflowOrchestratorServiceTest {
                 .hasMessageContaining("approval");
     }
 
+            @Test
+            void shouldCompleteReleaseReadinessAfterApproval() {
+            WorkflowOrchestratorService service = new WorkflowOrchestratorService();
+            WorkflowExecution execution = service.initializeExecution("url-shortener-demo");
+            completePreReleaseStages(service, execution);
+
+            assertThatThrownBy(() -> service.executeReleaseReadiness(execution.getExecutionId()))
+                .isInstanceOf(IllegalStateException.class);
+
+            service.approveReleaseReadiness(execution.getExecutionId(), "release approved by reviewer");
+
+            assertThat(execution.getStageStatus(WorkflowStage.RELEASE_READINESS))
+                .isEqualTo(WorkflowStatus.COMPLETED);
+            assertThat(execution.getLastNote(WorkflowStage.RELEASE_READINESS))
+                .isEqualTo("release approved by reviewer");
+            }
+
+    @Test
+    void shouldPreventCompletingStageBeforeDependencies() {
+        WorkflowOrchestratorService service = new WorkflowOrchestratorService();
+        WorkflowExecution execution = service.initializeExecution("url-shortener-demo");
+
+        assertThatThrownBy(() -> service.markStageComplete(
+                execution.getExecutionId(), WorkflowStage.ARCHITECTURE, "design approved"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("REQUIREMENTS");
+    }
+
     @Test
     void shouldTrackRetriesRollbackAndMetrics() {
         WorkflowOrchestratorService service = new WorkflowOrchestratorService();
@@ -50,5 +78,13 @@ class WorkflowOrchestratorServiceTest {
         assertThat(metrics.getRollbackCount()).isGreaterThanOrEqualTo(0);
         assertThat(metrics.getAuditTrail()).isNotEmpty();
         assertThat(metrics.getSuccessRate()).isGreaterThanOrEqualTo(0.0);
+    }
+
+    private void completePreReleaseStages(WorkflowOrchestratorService service, WorkflowExecution execution) {
+        service.markStageComplete(execution.getExecutionId(), WorkflowStage.REQUIREMENTS, "requirements accepted");
+        service.markStageComplete(execution.getExecutionId(), WorkflowStage.ARCHITECTURE, "design approved");
+        service.markStageComplete(execution.getExecutionId(), WorkflowStage.IMPLEMENTATION, "build completed");
+        service.markStageComplete(execution.getExecutionId(), WorkflowStage.VALIDATION, "tests passed");
+        service.markStageComplete(execution.getExecutionId(), WorkflowStage.DOCUMENTATION, "docs updated");
     }
 }

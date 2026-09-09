@@ -192,5 +192,27 @@ npm run dev -- --host 0.0.0.0
 - Self-referential input was rejected to avoid broken redirect behavior
 - CORS was configured for the frontend origin
 
+## Final resume notes for tomorrow
+The app is in a working local demo state. The biggest remaining assignment gap is not the URL shortener itself; it is the orchestration layer required by the project brief.
+
+### Current honest status
+- URL shortening, redirecting, analytics, and frontend flow are working
+- The app is stable on local ports 9091 and 5173
+- The project now has a minimal workflow model, but it is still lightweight rather than a full governance engine
+- The next goal is to strengthen the orchestration story with explicit dependency checks, approval gates, and traceability
+
+### Highest-priority tasks for tomorrow
+1. Formalize the workflow dependency graph
+2. Add API endpoints or service methods to manage workflow state
+3. Improve approval gating for release-readiness
+4. Add richer retry, rollback, and audit tracking
+5. Document the orchestration model clearly in the final narrative
+
+### Keep in mind during the next session
+- Do not lose time on environment issue triage unless the app fails to start
+- Reuse the validated backend port and frontend port rather than changing them again
+- Validate the happy path before adding complexity
+- Treat orchestration as the main differentiation layer for the assignment
+
 ## Session handoff summary
-This project is no longer a purely backend-only prototype. It is now a frontend-backed demo app with a working API flow and clean local startup configuration. The biggest value for the next session is to keep the project focused on the interview narrative: a working URL shortener with a believable agentic workflow layer, good docs, and a polished demo path.
+This project is no longer a purely backend-only prototype. It is now a frontend-backed demo app with a working API flow, clean local startup configuration, and a basic workflow orchestration model. The next session should focus on turning that workflow model into a more explicit and defensible governance layer while keeping the working demo intact.
